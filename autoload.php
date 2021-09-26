@@ -25,8 +25,8 @@ function initialize($className) {
 function include_class($namespace, $dir, $class) {
     $rootPath = $_SERVER['DOCUMENT_ROOT'];
     $pos = strpos($class, '\\');
-    $ns = substr($class, 0, $pos);
-    $class = substr($class, $pos + 1);
+    $ns = $pos ? substr($class, 0, $pos) : "";
+    $class = $pos ? substr($class, $pos + 1) : $class;
 
     if ($ns != $namespace) {
         return;
