@@ -1,19 +1,14 @@
 <?php
 
 class Note {
-    private $id;
-    private $title;
-    private $content;
-    private $createdDate;
-    private $updatedDate;
-
+    function __construct() {}
 
     function setId($id) {
         $this->id = $id;
     }
 
     function getId() {
-        return $id;
+        return $this->id;
     }
 
     function setTitle($title) {
@@ -21,7 +16,7 @@ class Note {
     }
 
     function getTitle() {
-        return $title;
+        return $this->title;
     }
 
     function setContent($content) {
@@ -29,7 +24,7 @@ class Note {
     }
 
     function getContent() {
-        return $content;
+        return $this->content;
     }
 
     function setCreatedDate($createdDate) {
@@ -37,7 +32,7 @@ class Note {
     }
 
     function getCreatedDate() {
-        return $createdDate;
+        return $this->createdDate;
     }
 
     function setUpdatedDate($updatedDate) {
@@ -45,6 +40,6 @@ class Note {
     }
 
     function getUpdatedDate() {
-        return $updatedDate;
+        return $this->updatedDate;
     }
 }
