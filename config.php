@@ -3,29 +3,24 @@
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Headers: *");
 
-ini_set('display_errors', true);
-error_reporting(E_ALL);
-
 define('APP_NAME', 'api');
-define('DEBUG_MODE', false);
+define('DEBUG_MODE', 0);
+
+//if (defined('DEBUG_MODE') && DEBUG_MODE) {
+    ini_set('display_errors', 1);
+    error_reporting(E_ALL);
+//}
+
+// Autoloading
+require 'autoload.php';
 
 // Database connection
-
 $dbHost = 'localhost';
 $dbName = 'teste_db';
 $dbUser = 'php';
 $dbPass = 'root';
 
-try {
-    $db = new PDO("mysql:dbname=$dbName;host=$dbHost", $dbUser, $dbPass);
-} catch(PDOException $e) {
-    echo "Failed connecting to the database.<br>";
-    echo $e;
-    die();
-}
-
-// Autoloading
-require 'autoload.php';
+System\Database::init($dbName, $dbHost, $dbUser, $dbPass, true);
 
 // Router
 $router = new System\Router();
