@@ -27,13 +27,10 @@ class Router {
         $list = [];
         foreach ($params as $p) {
             $p = explode('=', $p);
-            if (!is_array($p)) {
-                continue;
+            if (is_array($p)) {
+                $key = $p[0];
+                $list[$key] = $p[1];
             }
-
-            $list[] = [
-                $p[0] => $p[1]
-            ];
         }
 
         $params = $list;
@@ -47,13 +44,15 @@ class Router {
             $allowedParams = [];
 
             if (is_string($method['allowedParams'])) {
-                $allowedParams[] = $method['allowedParams'];
+                $key = $method['allowedParams'];
+                $value = array_key_exists($key, $params) ? $params[$key] : null;
+
+                if ($value) {
+                    $allowedParams[] = $value;
+                }
             } elseif (is_array($method['allowedParams'])) {
                 foreach ($method['allowedParams'] as $ap) {
-                    foreach ($params as $param) {
-                        $key = key($param);
-                        $value = $param[$key];
-    
+                    foreach ($params as $key => $value) {
                         if ($ap == $key) {
                             $allowedParams[$key] = $value;
                             break;
@@ -62,11 +61,13 @@ class Router {
                 }
             }
 
-            
-            //echo '<pre>'.var_export($allowedParams,1).'</pre>';
+            //echo 'ALLOWED PARAMS:<pre>'.var_export($allowedParams,1).'</pre>';
 
             if ($ep === $endpoint) {
-                return $method['callback']($allowedParams);
+                $callback = $method['callback'];
+                if (is_callable($callback)) {
+                    return call_user_func_array($callback, $allowedParams);
+                }
             }
         }
 
