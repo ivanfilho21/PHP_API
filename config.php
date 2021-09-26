@@ -30,9 +30,6 @@ require 'autoload.php';
 // Router
 $router = new System\Router();
 
-// TODO: limitar aos métodos suportados
-// TODO: limitar aos nomes das rotas
-/* $router->get('/aa', function() {
-    //
-});
-*/
+require 'routes.php';
+
+$router->init();
