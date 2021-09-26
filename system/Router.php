@@ -3,20 +3,16 @@
 namespace System;
 
 class Router {
-    private $getMethods = [];
-    private $postMethods = [];
+    private $methods = [];
 
     function init() {
         $currentMethod = $_SERVER['REQUEST_METHOD'];
+        $currentMethod = strtolower($currentMethod);
 
-        if ($currentMethod == 'GET') {
-            $methodsArray = $this->getMethods;
-        } elseif ($currentMethod == 'POST') {
-            $methodsArray = $this->postMethods;
-        } else {
+        if ($currentMethod != 'get' && $currentMethod != 'post' && $currentMethod != 'put') {
             return http_response_code(405);
         }
-
+        
         $key = 'endpoint';
         $exists = array_key_exists($key, $_REQUEST);
         $endpoint = $exists ? $_REQUEST[$key] : '';
@@ -42,10 +38,10 @@ class Router {
 
         $params = $list;
 
-        //echo '<pre>'.var_export($methodsArray,1).'</pre>';
+        //echo '<pre>'.var_export($this->methods[$currentMethod],1).'</pre>';
         //echo '<pre>'.var_export($params,1).'</pre>';
 
-        foreach ($methodsArray as $method) {
+        foreach ($this->methods[$currentMethod] as $method) {
             $ep = trim($method['endpoint'], '/');
 
             $allowedParams = [];
@@ -78,7 +74,7 @@ class Router {
     }
 
     function __call($name, $params) {
-        if ($name !== 'get' && $name !== 'post') {
+        if ($name !== 'get' && $name !== 'post' && $name !== 'put') {
             return;
         }
 
@@ -86,16 +82,10 @@ class Router {
         $key = 'params';
         $allowedParams = array_key_exists($key, $a) ? $a[$key] : [];
 
-        $array = [
+        $this->methods[$name][] = [
             'endpoint'      => $params[0],
             'callback'      => $params[1],
             'allowedParams' => $allowedParams
         ];
-
-        if ($name === 'get') {
-            $this->getMethods[] = $array;
-        } elseif ($name === 'post') {
-            $this->postMethods[] = $array;
-        }
     }
 }

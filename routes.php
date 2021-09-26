@@ -7,3 +7,7 @@ $router->get('/ping', function($params) {
 $router->post('/test', function() {
     echo json_encode("Hello World");
 });
+
+$router->put('/test', function() {
+    echo json_encode("Hi put");
+});
