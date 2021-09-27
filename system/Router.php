@@ -28,8 +28,10 @@ class Router {
         foreach ($params as $p) {
             $p = explode('=', $p);
             if (is_array($p)) {
-                $key = $p[0];
-                $list[$key] = $p[1];
+                if (array_key_exists(0, $p) && array_key_exists(1, $p)) {
+                    $key = $p[0];
+                    $list[$key] = $p[1];
+                }
             }
         }
 
