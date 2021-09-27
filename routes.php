@@ -101,10 +101,6 @@ $router->post('/', function() {
     echo $response;
 });
 
-$router->put('/test', function() {
-    echo json_encode("Hi put");
-});
-
 function stripString(?string $str) {
     if ($str) {
         $str = htmlspecialchars_decode($str);
