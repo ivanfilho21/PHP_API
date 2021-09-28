@@ -9,7 +9,7 @@ class Router {
         $currentMethod = $_SERVER['REQUEST_METHOD'];
         $currentMethod = strtolower($currentMethod);
 
-        if ($currentMethod != 'get' && $currentMethod != 'post' && $currentMethod != 'put') {
+        if ($currentMethod != 'get' && $currentMethod != 'post' && $currentMethod != 'put' && $currentMethod != 'delete') {
             return http_response_code(405);
         }
         
@@ -36,7 +36,7 @@ class Router {
     }
 
     function __call($name, $params) {
-        if ($name !== 'get' && $name !== 'post' && $name !== 'put') {
+        if ($name !== 'get' && $name !== 'post' && $name !== 'put' && $name !== 'delete') {
             return;
         }
 
