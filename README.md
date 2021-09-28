@@ -12,3 +12,4 @@ GET | /ping | - | Returns "PONG".
 GET | / | idNota | Returns a note.
 GET | /list | paginaAtual, maxNotas | Returns a list of notes limited by page and max per page.
 POST | / | titulo, conteudo | Creates a note.
+DELETE | / | idNota | Deletes a note.
