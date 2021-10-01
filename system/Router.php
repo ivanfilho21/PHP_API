@@ -40,13 +40,9 @@ class Router {
             return;
         }
 
-        $a = count($params) > 2 ? $params[2] : [];
-        $key = 'params';
-        $allowedParams = array_key_exists($key, $a) ? $a[$key] : [];
-
         $this->methods[$name][] = [
-            'endpoint'      => $params[0],
-            'callback'      => $params[1]
+            'endpoint' => $params[0],
+            'callback' => $params[1]
         ];
     }
 }
