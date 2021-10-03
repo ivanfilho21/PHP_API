@@ -7,8 +7,8 @@ $router->get('/ping', function() {
 });
 
 $router->get('/', function() {
+    $note = new Note();
     $error = ['error' => ['message' => 'Não foi possível concluir sua requisição.']];
-    $note = null;
     $id = intval(getValueFromArray('idNota', $_GET));
 
     if ($id > 0) {
@@ -23,6 +23,8 @@ $router->get('/', function() {
             echo json_encode(getNoteFromDB($note));
             return;
         }
+    } else {
+        $error['error']['message'] .= '\nIdentificador da Nota é inválido.';
     }
 
     echo json_encode($error);
