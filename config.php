@@ -3,8 +3,7 @@
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Headers: *");
 
-define('APP_NAME', 'api');
-define('DEBUG_MODE', 0);
+define('DEBUG_MODE', 1);
 
 //if (defined('DEBUG_MODE') && DEBUG_MODE) {
     ini_set('display_errors', 1);
