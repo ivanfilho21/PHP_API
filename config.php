@@ -26,4 +26,4 @@ $router = new System\Router();
 
 require 'routes.php';
 
-$router->init();
+$router->initialize();
