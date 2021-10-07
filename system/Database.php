@@ -8,6 +8,14 @@ class Database {
 
     private function __construct() {}
 
+    static function getConnection() {
+        return Database::getInstance()->connection;
+    }
+
+    static function init() {
+        Database::getInstance()->connect();
+    }
+
     private static function getInstance() {
         global $instance;
         if ($instance == null) {
@@ -16,21 +24,26 @@ class Database {
         return $instance;
     }
 
-    static function getConnection() {
-        return Database::getInstance()->connection;
-    }
+    private function connect() {
+        $dbName = getenv('DB_NAME');
+        $dbHost = getenv('DB_HOST');
+        $dbPort = getenv('DB_PORT');
+        $dbUser = getenv('DB_USERNAME');
+        $dbPass = getenv('DB_PASSWORD');
+        $dbCharset = Utils::getFromArray('DB_CHARSET', $_ENV, 'utf8');
+        $debug = getenv('DEBUG_MODE');
 
-    static function init($dbName, $dbHost, $dbUser, $dbPass, $debug = false) {
-        Database::getInstance()->connect($dbName, $dbHost, $dbUser, $dbPass, $debug);
-    }
-
-    private function connect($dbName, $dbHost, $dbUser, $dbPass, $debug) {
         try {
-            $this->connection = new \PDO("mysql:dbname=$dbName;host=$dbHost", $dbUser, $dbPass);
+            $dsn = "mysql:host=$dbHost;";
+            $dsn .= empty($dbPort) ? '' : "port=$dbPort;";
+            $dsn .= empty($dbCharset) ? '' : "charset=$dbCharset;";
+            $dsn .= "dbname=$dbName;";
+
+            $this->connection = new \PDO("mysql:host=$dbHost;port=$dbPort;charset=$dbCharset;dbname=$dbName;", $dbUser, $dbPass);
             if ($debug) {
                 $this->connection->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_WARNING);
             }
-        } catch(PDOException $e) {
+        } catch(\PDOException $e) {
             if ($debug) {
                 echo "Failed connecting to the database.<br>";
                 echo $e;
