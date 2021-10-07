@@ -1,5 +1,4 @@
 RewriteEngine On
-RewriteBase /PHP_API/
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_FILENAME} !-f
-RewriteRule ^(.*)$ index.php?endpoint=$1 [QSA,L]
+RewriteRule ^(.*)$ /PHP_API/index.php?endpoint=$1 [QSA,L]
