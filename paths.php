@@ -5,8 +5,8 @@
  */
 return [
     '' => [
-        '',
         'api/model'
     ],
-    'System\\' => 'system'
+    'System\\' => 'system',
+    'Api\\Controller' => 'api/controller',
 ];
