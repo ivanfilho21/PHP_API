@@ -7,10 +7,10 @@ use System\Database as DB;
 class NoteController {
     private $errorResponse;
 
-    function index($id = 0) {
+    function index($idNota = 0) {
         $note = new \Note();
         $this->errorResponse = $this->getDefaultError();
-        $id = intval($id);
+        $id = intval($idNota);
 
         if ($id > 0) {
             $sql = 'SELECT * FROM `notes` WHERE `id` = :id';
@@ -28,10 +28,10 @@ class NoteController {
         echo json_encode($this->errorResponse);
     }
 
-    function list($page = 1, $limit = 5) {
+    function list($paginaAtual = 1, $maxNotas = 5) {
         $this->errorResponse = $this->getDefaultError();
-        $page = intval($page);
-        $limit = intval($limit);
+        $page = intval($paginaAtual);
+        $limit = intval($maxNotas);
 
         $validPage = $page > 0;
         $validLimit = $limit == 5 || $limit == 10 || $limit == 20;
@@ -75,9 +75,9 @@ class NoteController {
         echo json_encode($this->errorResponse);
     }
 
-    function remove($id = 0) {
+    function remove($idNota = 0) {
         $this->errorResponse = $this->getDefaultError();
-        $id = intval($id);
+        $id = intval($idNota);
 
         if ($id > 0) {
             $sql = 'DELETE FROM `notes` WHERE `id` = :id';
@@ -93,8 +93,8 @@ class NoteController {
 
     function create($params) {
         $this->errorResponse = $this->getDefaultError();
-        $title = $this->sanitizeString($this->getValueFromArray('titulo', $_POST));
-        $content = $this->sanitizeString($this->getValueFromArray('conteudo', $_POST));
+        $title = $this->sanitizeString($this->getValueFromArray('titulo', $params));
+        $content = $this->sanitizeString($this->getValueFromArray('conteudo', $params));
 
         if ($title) {
             $note = new \Note();
