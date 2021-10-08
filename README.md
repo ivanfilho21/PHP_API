@@ -1,8 +1,8 @@
 # PHP_API
-A simple Rest API made with PHP.
+A simple public Rest API made with PHP.
 
-
-Still in progres...
+# Base URL
+### https://salty-hamlet-85028.herokuapp.com
 
 ## Endpoints
 
