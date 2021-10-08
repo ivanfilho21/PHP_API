@@ -64,7 +64,7 @@ class Router {
         // echo '<pre>'.var_export($this->methods,1).'</pre>';
         // echo '<pre>'.var_export($methodArray,1).'</pre>';
 
-        $params = $method == 'post' ? $_POST : $_GET;
+        $params = $method == 'post' ? ['params' => $_POST] : $_GET;
         // echo '<pre>' . var_export($params, true) . '</pre>';
 
         foreach ($methodArray as $endpoint => $array) {
