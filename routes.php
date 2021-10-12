@@ -7,6 +7,7 @@ $router->get('/ping', function() {
 });
 
 $router->get('/', 'NoteController@index', ['idNota']);
-$router->get('/list', 'NoteController@list', ['paginaAtual', 'maxNotas']);
 $router->post('/', 'NoteController@create');
+$router->put('/', 'NoteController@update', 'idNota');
 $router->delete('/', 'NoteController@remove', 'idNota');
+$router->get('/list', 'NoteController@list', ['paginaAtual', 'maxNotas']);
