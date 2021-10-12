@@ -3,6 +3,7 @@
 namespace Api\Controller;
 
 use System\Database as DB;
+use System\Utils as Utils;
 
 class NoteController {
     private $errorResponse;
@@ -18,13 +19,107 @@ class NoteController {
             $stmt->bindValue(':id', $id, \PDO::PARAM_INT);
             if ($stmt->execute()) {
                 $note = $stmt->rowCount() > 0 ? $stmt->fetch() : null;
+
+                http_response_code(200);
                 echo json_encode($this->getNoteFromDB($note));
                 return;
             }
         } else {
-            $this->errorResponse['error']['message'] .= '\nIdentificador da Nota é inválido.';
+            $this->errorResponse['error']['message'] .= "\nIdentificador da Nota é inválido.";
         }
 
+        http_response_code(400);
+        echo json_encode($this->errorResponse);
+    }
+
+    function update($idNota = 0) {
+        $note = new \Note();
+        $this->errorResponse = $this->getDefaultError();
+        $id = intval($idNota);
+
+        // Get PUT request params
+        $array = explode('&', file_get_contents("php://input"));
+        $params = [];
+
+        foreach ($array as $line) {
+            $entry = explode('=', $line);
+
+            if (count($entry) == 1) {
+                continue;
+            }
+
+            $key = Utils::getFromArray(0, $entry);
+            $value = Utils::getFromArray(1, $entry);
+
+            if ($key) {
+                $key = urldecode($key);
+                $value = $value ? urldecode($value) : $value;
+                $params[$key] = $value;
+            }
+        }
+
+        if ($id > 0) {
+            $title = Utils::sanitizeString(Utils::getFromArray('titulo', $params));
+            $content = Utils::sanitizeString(Utils::getFromArray('conteudo', $params));
+
+            if ($title) {
+                $note->setId($id);
+                $note->setTitle($title);
+                $note->setContent($content);
+    
+                if ($this->upsertNote($note)) {
+                    http_response_code(204);
+                    return;
+                }
+            } else {
+                $this->errorResponse['error']['message'] .= "\nTítulo da nota é obrigatório.";
+            }
+        } else {
+            $this->errorResponse['error']['message'] .= "\nIdentificador da Nota é inválido.";
+        }
+
+        http_response_code(400);
+        echo json_encode($this->errorResponse);
+    }
+
+    function remove($idNota = 0) {
+        $this->errorResponse = $this->getDefaultError();
+        $id = intval($idNota);
+
+        if ($id > 0) {
+            $sql = 'DELETE FROM `notes` WHERE `id` = :id';
+            $stmt = DB::getConnection()->prepare($sql);
+            $stmt->bindValue(':id', $id, \PDO::PARAM_INT);
+            
+            if ($stmt->execute()) {
+                http_response_code(204);
+                return;
+            }
+        }
+
+        http_response_code(400);
+        echo json_encode($this->errorResponse);
+    }
+
+    function create($params) {
+        $this->errorResponse = $this->getDefaultError();
+        $title = Utils::sanitizeString(Utils::getFromArray('titulo', $params));
+        $content = Utils::sanitizeString(Utils::getFromArray('conteudo', $params));
+
+        if ($title) {
+            $note = new \Note();
+            $note->setTitle($title);
+            $note->setContent($content);
+
+            if ($this->upsertNote($note)) {
+                http_response_code(204);
+                return;
+            }
+        } else {
+            $this->errorResponse['error']['message'] .= "\nTítulo da nota é obrigatório.";
+        }
+
+        http_response_code(400);
         echo json_encode($this->errorResponse);
     }
 
@@ -38,11 +133,11 @@ class NoteController {
         $valid = $validPage && $validLimit;
 
         if (!$validPage) {
-            $this->errorResponse['error']['message'] .= '\nNúmero de página inválido.';
+            $this->errorResponse['error']['message'] .= "\nNúmero de página inválido.";
         }
 
         if (!$validLimit) {
-            $this->errorResponse['error']['message'] .= '\nNúmero máximo de notas inválido.';
+            $this->errorResponse['error']['message'] .= "\nNúmero máximo de notas inválido.";
         }
 
         if ($valid) {
@@ -66,81 +161,18 @@ class NoteController {
                         $list[] = $this->getNoteFromDB($note);
                     }
                 }
-        
+
                 echo json_encode($list);
                 return;
             }
         }
 
-        echo json_encode($this->errorResponse);
-    }
-
-    function remove($idNota = 0) {
-        $this->errorResponse = $this->getDefaultError();
-        $id = intval($idNota);
-
-        if ($id > 0) {
-            $sql = 'DELETE FROM `notes` WHERE `id` = :id';
-            $stmt = DB::getConnection()->prepare($sql);
-            $stmt->bindValue(':id', $id, \PDO::PARAM_INT);
-            
-            if ($stmt->execute()) {
-                return;
-            }
-        }
-        echo json_encode($this->errorResponse);
-    }
-
-    function create($params) {
-        $this->errorResponse = $this->getDefaultError();
-        $title = $this->sanitizeString($this->getValueFromArray('titulo', $params));
-        $content = $this->sanitizeString($this->getValueFromArray('conteudo', $params));
-
-        if ($title) {
-            $note = new \Note();
-            $note->setTitle($title);
-            $note->setContent($content);
-
-            $sql = 'INSERT INTO `notes` SET `title` = :title, `content` = :content';
-            $stmt = DB::getConnection()->prepare($sql);
-            $stmt->bindValue(':title', $note->getTitle(), \PDO::PARAM_STR);
-            $stmt->bindValue(':content', $note->getContent(), \PDO::PARAM_STR);
-            if ($stmt->execute()) {
-                return;
-            }
-        } else {
-            $this->errorResponse['error']['message'] = 'Título da nota é obrigatório.';
-        }
-
+        http_response_code(400);
         echo json_encode($this->errorResponse);
     }
 
     private function getDefaultError(): array {
         return ['error' => ['message' => 'Não foi possível concluir sua requisição.']];
-    }
-
-    private function stripString(?string $str): ?string {
-        if ($str) {
-            $str = htmlspecialchars_decode($str);
-            return stripslashes($str);
-        }
-        return null;
-    }
-    
-    private function sanitizeString(?string $str): ?string {
-        if ($str) {
-            $str = trim($str);
-            $str = htmlspecialchars($str);
-            return addslashes($str);
-        }
-        return null;
-    }
-    
-    private function getValueFromArray($key, array $array, $defaultValue = null) {
-        if ($key && $array) {
-            return array_key_exists($key, $array) ? $array[$key] : $defaultValue;
-        }
-        return $defaultValue;
     }
     
     private function getNoteFromDB(?array $result): ?\Note {
@@ -148,18 +180,37 @@ class NoteController {
     
         if ($result) {
             $note = new \Note();
-            $note->setId($this->getValueFromArray('id', $result));
-            $note->setTitle($this->stripString($this->getValueFromArray('title', $result)));
-            $note->setContent($this->getValueFromArray('content', $result));
+            $note->setId(Utils::getFromArray('id', $result));
+            $note->setTitle(Utils::stripString(Utils::getFromArray('title', $result)));
+            $note->setContent(Utils::getFromArray('content', $result));
         
             $format = 'Y-m-d H:m';
-            $created = strtotime( date($format, strtotime($this->getValueFromArray('created_date', $result))) );
-            $updated = strtotime( date($format, strtotime($this->getValueFromArray('updated_date', $result))) );
+            $created = strtotime( date($format, strtotime(Utils::getFromArray('created_date', $result))) );
+            $updated = strtotime( date($format, strtotime(Utils::getFromArray('updated_date', $result))) );
             $note->setCreatedDate($created);
             $note->setUpdatedDate($updated);
         }
     
         return $note;
+    }
+
+    private function upsertNote(\Note $note): bool {
+        $updateMode = !empty($note->getId());
+        $operation = $updateMode ? 'UPDATE' : 'INSERT INTO';
+        $where = $updateMode ? ' WHERE `id` = :id' : '';
+        $sql = "$operation `notes` SET `title` = :title, `content` = :content$where";
+        $stmt = DB::getConnection()->prepare($sql);
+        if ($updateMode) {
+            $stmt->bindValue(':id', $note->getId(), \PDO::PARAM_INT);
+        }
+        $stmt->bindValue(':title', $note->getTitle(), \PDO::PARAM_STR);
+        $stmt->bindValue(':content', $note->getContent(), \PDO::PARAM_STR);
+
+        if ($stmt->execute()) {
+            return true;
+        }
+
+        return false;
     }
 
 }
