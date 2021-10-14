@@ -32,31 +32,10 @@ class NoteController {
         echo json_encode($this->errorResponse);
     }
 
-    function update($idNota = 0) {
+    function updateNote($idNota, $params) {
         $note = new \Note();
         $this->errorResponse = $this->getDefaultError();
         $id = intval($idNota);
-
-        // Get PUT request params
-        $array = explode('&', file_get_contents("php://input"));
-        $params = [];
-
-        foreach ($array as $line) {
-            $entry = explode('=', $line);
-
-            if (count($entry) == 1) {
-                continue;
-            }
-
-            $key = Utils::getFromArray(0, $entry);
-            $value = Utils::getFromArray(1, $entry);
-
-            if ($key) {
-                $key = urldecode($key);
-                $value = $value ? urldecode($value) : $value;
-                $params[$key] = $value;
-            }
-        }
 
         if ($id > 0) {
             $title = Utils::sanitizeString(Utils::getFromArray('titulo', $params));
@@ -80,6 +59,10 @@ class NoteController {
 
         http_response_code(400);
         echo json_encode($this->errorResponse);
+    }
+
+    function update($idNota = 0) {
+        return $this->updateNote($idNota, $this->getRequestParams());
     }
 
     function remove($idNota = 0) {
@@ -125,6 +108,10 @@ class NoteController {
 
     function list($paginaAtual = 1, $maxNotas = 5) {
         $this->errorResponse = $this->getDefaultError();
+        
+        $paginaAtual = empty($paginaAtual) ? 1 : $paginaAtual;
+        $maxNotas = empty($maxNotas) ? 5 : $maxNotas;
+
         $page = intval($paginaAtual);
         $limit = intval($maxNotas);
 
@@ -169,6 +156,33 @@ class NoteController {
 
         http_response_code(400);
         echo json_encode($this->errorResponse);
+    }
+
+    /**
+     * Retorna os parâmetros da requisição PUT.
+     */
+    private function getRequestParams(): array {
+        $array = explode('&', file_get_contents("php://input"));
+        $params = [];
+
+        foreach ($array as $line) {
+            $entry = explode('=', $line);
+
+            if (count($entry) == 1) {
+                continue;
+            }
+
+            $key = Utils::getFromArray(0, $entry);
+            $value = Utils::getFromArray(1, $entry);
+
+            if ($key) {
+                $key = urldecode($key);
+                $value = $value ? urldecode($value) : $value;
+                $params[$key] = $value;
+            }
+        }
+
+        return $params;
     }
 
     private function getDefaultError(): array {
