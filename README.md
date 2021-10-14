@@ -1,5 +1,6 @@
 # PHP_API
 A simple public Restful API created using pure PHP.
+It supports HTML based clients.
 
 # Base URL
 ### https://salty-hamlet-85028.herokuapp.com
@@ -14,3 +15,5 @@ GET | /list | paginaAtual, maxNotas | - | Returns a list of notes limited by pag
 POST | / | - | titulo, conteudo | Creates a note.
 PUT | / | idNota | titulo, conteudo | Updates a note.
 DELETE | / | idNota | - | Deletes a note.
+POST | /update/{idNota} | - | titulo, conteudo | Updates a note.
+POST | /delete/{idNota} | - | - | Deletes a note.
