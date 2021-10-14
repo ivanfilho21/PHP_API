@@ -12,8 +12,7 @@ if (DEBUG_MODE) {
 
 require 'autoload.php';
 
-$envName = '.env-' .(DEBUG_MODE ? 'debug' : 'prod');
-System\DotEnv::load($envName);
+System\DotEnv::load('.env');
 
 $timezone = getenv('TIME_ZONE');
 if ($timezone) {
