@@ -11,3 +11,6 @@ $router->post('/', 'NoteController@create');
 $router->put('/', 'NoteController@update', 'idNota');
 $router->delete('/', 'NoteController@remove', 'idNota');
 $router->get('/list', 'NoteController@list', ['paginaAtual', 'maxNotas']);
+
+$router->post('/update/{idNota}', 'NoteController@updateNote');
+$router->post('/delete/{idNota}', 'NoteController@remove');
