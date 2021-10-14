@@ -9,22 +9,32 @@ class Router {
         // echo '<pre>' . var_export($params, true) . '</pre>';
         
         if (!$this->isMethodValid($method)) {
-            throw new \Exception(sprintf('Method %s is not supported by the Router.', $method));
+            throw new \InvalidArgumentException(sprintf('Method %s is not supported by the Router.', $method));
         }
 
         $endpoint = Utils::getFromArray(0, $params);
         
         if (empty($endpoint)) {
-            throw new \Exception('Endpoint must not be empty.');
+            throw new \InvalidArgumentException('Endpoint must not be empty.');
         }
 
         $callable = Utils::getFromArray(1, $params);
 
         if (empty($callable)) {
-            throw new \Exception('You must specify either a callback or a string containing Controller and Action.');
+            throw new \InvalidArgumentException('You must specify either a callback or a string containing Controller and Action.');
         }
 
-        $arguments = Utils::getFromArray(2, $params, []);
+        $matches = [];
+        $regexPattern = '/\/{([a-zA-Z]+)}/';
+        preg_match_all($regexPattern, $endpoint, $matches);
+        array_shift($matches);
+        $endpoint = preg_replace($regexPattern, '', $endpoint);
+
+        // echo "Endpoint: $endpoint" . '<pre>' . var_export($matches, true) . '</pre>';
+
+        // $arguments = isset($matches[0]) ? $matches[0] : Utils::getFromArray(2, $params, []);
+        $isUrlFriendly = !empty($matches[0]);
+        $arguments = $isUrlFriendly ? $matches[0] : Utils::getFromArray(2, $params, []);
         $arguments = is_array($arguments) ? $arguments : [$arguments];
         $currentMethod = [];
 
@@ -32,14 +42,15 @@ class Router {
             $callable = explode('@', $callable);
             $controller = $this->getController($callable);
             $currentMethod = [
-                'controller' => "\\Api\\Controller\\$controller",
-                'action'     => $this->getAction($callable),
-                'params'     => $arguments
+                'friendlyUrl' => $isUrlFriendly,
+                'controller'  => "\\Api\\Controller\\$controller",
+                'action'      => $this->getAction($callable),
+                'params'      => $arguments
             ];
         } else if (is_callable($callable)) {
             $currentMethod['callback'] = $callable;
         } else {
-            throw new \Exception('You must specify either a callback or a string containing Controller and Action.');
+            throw new \InvalidArgumentException('You must specify either a callback or a string containing Controller and Action.');
         }
         
         $this->methods[$method][$endpoint] = $currentMethod;
@@ -53,48 +64,78 @@ class Router {
         }
 
         $currentEndpoint = Utils::getFromArray('endpoint', $_GET, '');
-        unset($_GET['endpoint']);
-
         $currentEndpoint = trim($currentEndpoint, '/');
         $currentEndpoint = htmlentities($currentEndpoint, ENT_QUOTES, 'UTF-8');
-        $currentEndpoint = "/$currentEndpoint";
+        unset($_GET['endpoint']);
+
+        // Get arguments from endpoint String
+        $explodedEndpoint = explode('/', $currentEndpoint);
+        $currentEndpoint = "/$explodedEndpoint[0]";
+        array_shift($explodedEndpoint);
+
+        // echo '<pre>' . var_export($currentEndpoint, true) . '</pre>';
+
         $methodArray = Utils::getFromArray($method, $this->methods, []);
+        $endpointArray = Utils::getFromArray($currentEndpoint, $methodArray, null);
+        // echo '<pre>' . var_export($endpointArray, true) . '</pre>';
 
-        // echo '<pre>' . var_export($this->methods, true) . '</pre>';
-        // echo '<pre>'.var_export($this->methods,1).'</pre>';
-        // echo '<pre>'.var_export($methodArray,1).'</pre>';
-
-        $params = $method == 'post' ? ['params' => $_POST] : $_GET;
-        // echo '<pre>' . var_export($params, true) . '</pre>';
-
-        foreach ($methodArray as $endpoint => $array) {
-            if (strcmp($endpoint, $currentEndpoint) == 0) {
-                $callback = Utils::getFromArray('callback', $array);
-                
-                if (is_callable($callback)) {
-                    return call_user_func_array($callback, $params);
-                }
-
-                $methodParams = [];
-                foreach ($array['params'] as $p) {
-                    if (isset($params[$p])) {
-                        $methodParams[$p] = $params[$p];
-                    }
-                }
-
-                $methodParams = empty($methodParams) ? $params : $methodParams;
-                
-                $controller = $array['controller'];
-                $action = $array['action'];
-                $obj = new $controller();
-
-                if (is_callable([$obj, $action])) {
-                    return call_user_func_array([$obj, $action], $methodParams);
-                }
+        if ($endpointArray['friendlyUrl']) {
+            $arguments = empty($explodedEndpoint) ? [] : $explodedEndpoint;
+            if ($method == 'post') {
+                $arguments['params'] = $_POST;
             }
+        } else {
+            $arguments = $method == 'post' ? ['params' => $_POST] : $_GET;
+        }
+
+        // echo '<pre>' . var_export($arguments, true) . '</pre>';
+
+        if ($endpointArray) {
+            return $this->handleEndpoint($endpointArray, $arguments, $endpointArray['friendlyUrl']);
         }
 
         return http_response_code(404);
+    }
+
+    private function handleEndpoint(array $endpointArray, array $arguments, bool $isUrlFriendly) {
+        $callback = Utils::getFromArray('callback', $endpointArray);
+                
+        if (is_callable($callback)) {
+            return call_user_func_array($callback, $arguments);
+        }
+
+        $methodParams = [];
+
+        foreach ($endpointArray['params'] as $key => $p) {
+            if ($isUrlFriendly) {
+                if (isset($arguments[$p])) {
+                    $methodParams[$p] = $arguments[$p];
+                } elseif (isset($arguments[$key])) {
+                    $methodParams[] = $arguments[$key];
+                }
+            } else {
+                if (!isset($arguments[$p])) {
+                    $methodParams[] = null;
+                    continue;
+                }
+                $methodParams[$p] = $arguments[$p];
+                // $methodParams[$p] = isset($arguments[$p]) ? $arguments[$p] : null;
+            }
+        }
+
+        if (isset($arguments['params'])) {
+            $methodParams['params'] = $arguments['params'];
+        }
+
+        // echo '<pre>' . var_export($methodParams, true) . '</pre>';
+        
+        $controller = $endpointArray['controller'];
+        $action = $endpointArray['action'];
+        $obj = new $controller();
+
+        if (is_callable([$obj, $action])) {
+            return call_user_func_array([$obj, $action], $methodParams);
+        }
     }
 
     private function isMethodValid($method): bool {
@@ -109,7 +150,7 @@ class Router {
                 return $controller;
             }
         }
-        throw new \Exception('Controller not supplied.');
+        throw new \InvalidArgumentException('Controller not supplied.');
     }
 
     private function getAction(array $array): string {
@@ -119,7 +160,7 @@ class Router {
                 return $action;
             }
         }
-        throw new \Exception('Action not supplied.');
+        throw new \InvalidArgumentException('Action not supplied.');
     }
 
 }
