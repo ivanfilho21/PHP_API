@@ -197,10 +197,10 @@ class NoteController {
             $note->setId(Utils::getFromArray('id', $result));
             $note->setTitle(Utils::stripString(Utils::getFromArray('title', $result)));
             $note->setContent(Utils::getFromArray('content', $result));
-        
-            $format = 'Y-m-d H:m';
-            $created = strtotime( date($format, strtotime(Utils::getFromArray('created_date', $result))) );
-            $updated = strtotime( date($format, strtotime(Utils::getFromArray('updated_date', $result))) );
+
+            $format = 'Y-m-d H:m:s';
+            $created = date($format, strtotime(Utils::getFromArray('created_date', $result)));
+            $updated = date($format, strtotime(Utils::getFromArray('updated_date', $result)));
             $note->setCreatedDate($created);
             $note->setUpdatedDate($updated);
         }
